@@ -17,7 +17,7 @@ import (
 	"sync"
 	"syscall"
 
-	ss "github.com/shadowsocks/shadowsocks-go/shadowsocks"
+	ss "github.com/netroby/shadowsocks-go/shadowsocks"
 )
 
 const (
