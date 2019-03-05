@@ -147,7 +147,9 @@ func handleConnection(conn *ss.Conn, port string) {
 		return
 	}
 	debug.Println("connecting", host)
-	remote, err := net.Dial("tcp", host)
+
+	remote, err := parentProxy.Dial("tcp", host)
+
 	if err != nil {
 		if ne, ok := err.(*net.OpError); ok && (ne.Err == syscall.EMFILE || ne.Err == syscall.ENFILE) {
 			// log too many open file error
@@ -425,6 +427,7 @@ func unifyPortPassword(config *ss.Config) (err error) {
 
 var configFile string
 var config *ss.Config
+var parentProxy ss.ParentProxy
 
 func main() {
 	log.SetOutput(os.Stdout)
@@ -444,6 +447,8 @@ func main() {
 	flag.BoolVar((*bool)(&sanitizeIps), "A", false, "anonymize client ip addresses in all output")
 	flag.BoolVar(&udp, "u", false, "UDP Relay")
 	flag.StringVar(&managerAddr, "manager-address", "", "shadowsocks manager listening address")
+	flag.StringVar(&cmdConfig.ServerParentProxy, "r", "", "enable proxy for destination (socks5://localhost:1080, shadowsocks://method:password@localhost:8388)")
+
 	flag.Parse()
 
 	if printVer {
@@ -472,6 +477,14 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+
+	parentProxy, err = ss.CreateParentProxy(config.ServerParentProxy)
+
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
 	if err = unifyPortPassword(config); err != nil {
 		os.Exit(1)
 	}
